@@ -1,1 +1,3 @@
 *.job
+SimpleDetectronJob.e*
+SimpleDetectronJob.o*
