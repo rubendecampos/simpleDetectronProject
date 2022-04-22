@@ -26,7 +26,7 @@ class Detector:
             self.cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-Keypoints/keypoint_rcnn_R_50_FPN_3x.yaml")
 
         self.cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7
-        self.cfg.MODEL.DEVICE = "cuda" #if torch.cuda.is_available() else "cpu" #cpu or cuda
+        self.cfg.MODEL.DEVICE = "cuda" if torch.cuda.is_available() else "cpu" #cpu or cuda
 
         self.predictor = DefaultPredictor(self.cfg)
         
@@ -41,6 +41,30 @@ class Detector:
         output = viz.draw_instance_predictions(predictions["instances"].to("cpu"))
 
         timestr = time.strftime("%d%m%Y-%H%M%S")
-        cv2.imwrite("./results/result_{}_{}.jpg".format(self.model_type, timestr), output.get_image()[:,:,::-1])
-        #cv2.imshow("Result", output.get_image()[:,:,::-1])
-        #cv2.waitKey(0)
+        #cv2.imwrite("./results/result_{}_{}.jpg".format(self.model_type, timestr), output.get_image()[:,:,::-1])
+        cv2.imshow("Result", output.get_image()[:,:,::-1])
+        cv2.waitKey(0)
+
+    def onVideo(self, videoPath):
+        cap = cv2.VideoCapture(videoPath)
+
+        if cap.isOpened() == False:
+            print("Error reading video...")
+            return
+
+        (success, image) = cap.read()
+
+        while success:
+            predictions = self.predictor(image)
+
+            viz = Visualizer(image[:,:,::-1], metadata = MetadataCatalog.get(self.cfg.DATASETS.TRAIN[0]),
+                            instance_mode = ColorMode.IMAGE)
+
+            output = viz.draw_instance_predictions(predictions["instances"].to("cpu"))
+
+            cv2.imshow("Result", output.get_image()[:,:,::-1])
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord("q"):
+                break
+
+            (success, image) = cap.read()
